@@ -77,13 +77,19 @@ class RabbitMQQueueSensor(Sensor):
         if self.vhost:
             connection_params['virtual_host'] = self.vhost
 
-        self._logger.info('Connecting to RabbitMQ on %s:%d', self.host, self.port)
+        for item, value in connection_params.items():
+            self._logger.debug('Connecting to RabbitMQ with %s = %r', item, value)
 
+        self._logger.info('Connecting to RabbitMQ on %s:%r', self.host, self.port)
         self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
+
+        self._logger.debug('Opening channel on RabbitMQ')
         self.channel = self.conn.channel()
+
+        self._logger.debug('Setting QOS on RabbitMQ Channel')
         self.channel.basic_qos(prefetch_count=1)
 
-        self._logger.info('Connected to RabbitMQ on %s:%d', self.host, self.port)
+        self._logger.info('Connected to RabbitMQ on %s:%r', self.host, self.port)
 
         # Setup Qs for listening
         for queue in self.queues:
