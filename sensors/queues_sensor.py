@@ -28,9 +28,14 @@ class RabbitMQQueueSensor(Sensor):
 
         self._logger = self._sensor_service.get_logger(name=self.__class__.__name__)
         self.host = self._config['sensor_config']['host']
+        self.port = self._config['sensor_config'].get('port', 5672)
         self.username = self._config['sensor_config'].get('username')
         self.password = self._config['sensor_config'].get('password')
         self.vhost = self._config['sensor_config'].get('vhost')
+
+        self.socket_timeout = self._config['sensor_config'].get('socket_timeout', 60)
+        self.blocked_connection_timeout = self._config['sensor_config'].get('blocked_connection_timeout', 60)
+        self.heartbeat = self._config['sensor_config'].get('heartbeat', 600)
 
         queue_sensor_config = self._config['sensor_config']['rabbitmq_queue_sensor']
         self.queues = queue_sensor_config['queues']
@@ -59,7 +64,11 @@ class RabbitMQQueueSensor(Sensor):
 
     def setup(self):
         connection_params = {
-            'host': self.host
+            'host': self.host,
+            'port': self.port,
+            'socket_timeout': self.socket_timeout,
+            'blocked_connection_timeout': self.blocked_connection_timeout,
+            'heartbeat': self.heartbeat
         }
 
         if self.username and self.password:
@@ -68,7 +77,7 @@ class RabbitMQQueueSensor(Sensor):
         if self.vhost:
             connection_params['virtual_host'] = self.vhost
 
-        self._logger.info('Connecting to RabbitMQ on %s', self.host)
+        self._logger.info('Connecting to RabbitMQ on %s:', self.host, self.port)
 
         self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
         self.channel = self.conn.channel()
