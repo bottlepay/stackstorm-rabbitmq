@@ -79,10 +79,11 @@ class RabbitMQQueueSensor(Sensor):
             connection_params['virtual_host'] = self.vhost
 
         for item, value in connection_params.items():
-            self._logger.debug('Connecting to RabbitMQ with %s = %r', item, value)
+            self._logger.info('Connecting to RabbitMQ with %s = %r', item, value)
 
         self._logger.info('Connecting to RabbitMQ on %s:%r', self.host, self.port)
 
+        print(connection_params)
         try:
             self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
         except:
