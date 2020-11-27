@@ -28,9 +28,9 @@ class RabbitMQQueueSensor(Sensor):
 
         self._logger = self._sensor_service.get_logger(name=self.__class__.__name__)
         self.host = self._config['sensor_config']['host']
-        self.username = self._config['sensor_config']['username']
-        self.password = self._config['sensor_config']['password']
-        self.vhost = self._config['sensor_config']['vhost']
+        self.username = self._config['sensor_config'].get('username')
+        self.password = self._config['sensor_config'].get('password')
+        self.vhost = self._config['sensor_config'].get('vhost')
 
         queue_sensor_config = self._config['sensor_config']['rabbitmq_queue_sensor']
         self.queues = queue_sensor_config['queues']
@@ -68,12 +68,17 @@ class RabbitMQQueueSensor(Sensor):
         if self.vhost:
             connection_params['virtual_host'] = self.vhost
 
+        self._logger.info('Connecting to RabbitMQ on %s', self.host)
+
         self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
         self.channel = self.conn.channel()
         self.channel.basic_qos(prefetch_count=1)
 
+        self._logger.info('Connected to RabbitMQ on %s', self.host)
+
         # Setup Qs for listening
         for queue in self.queues:
+            self._logger.info('Consuming queue %s', queue)
             self.channel.queue_declare(queue=queue, durable=True)
 
             def callback(ch, method, properties, body, queue_copy=queue):
