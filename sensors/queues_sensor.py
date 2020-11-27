@@ -30,6 +30,7 @@ class RabbitMQQueueSensor(Sensor):
         self.host = self._config['sensor_config']['host']
         self.username = self._config['sensor_config']['username']
         self.password = self._config['sensor_config']['password']
+        self.vhost = self._config['sensor_config']['vhost']
 
         queue_sensor_config = self._config['sensor_config']['rabbitmq_queue_sensor']
         self.queues = queue_sensor_config['queues']
@@ -57,13 +58,17 @@ class RabbitMQQueueSensor(Sensor):
             self.conn.close()
 
     def setup(self):
-        if self.username and self.password:
-            credentials = PlainCredentials(username=self.username, password=self.password)
-            connection_params = pika.ConnectionParameters(host=self.host, credentials=credentials)
-        else:
-            connection_params = pika.ConnectionParameters(host=self.host)
+        connection_params = {
+            'host': self.host
+        }
 
-        self.conn = pika.BlockingConnection(connection_params)
+        if self.username and self.password:
+            connection_params['credentials'] = PlainCredentials(username=self.username, password=self.password)
+
+        if self.vhost:
+            connection_params['virtual_host'] = self.vhost
+
+        self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
         self.channel = self.conn.channel()
         self.channel.basic_qos(prefetch_count=1)
 
