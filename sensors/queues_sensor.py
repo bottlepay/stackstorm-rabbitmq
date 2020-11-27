@@ -1,5 +1,6 @@
 import json
 import pickle
+import sys
 
 import pika
 from pika.credentials import PlainCredentials
@@ -81,7 +82,11 @@ class RabbitMQQueueSensor(Sensor):
             self._logger.debug('Connecting to RabbitMQ with %s = %r', item, value)
 
         self._logger.info('Connecting to RabbitMQ on %s:%r', self.host, self.port)
-        self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
+
+        try:
+            self.conn = pika.BlockingConnection(pika.ConnectionParameters(**connection_params))
+        except:
+            self._logger.error('Connecting to RabbitMQ failed: %r', sys.exc_info()[0])
 
         self._logger.debug('Opening channel on RabbitMQ')
         self.channel = self.conn.channel()
